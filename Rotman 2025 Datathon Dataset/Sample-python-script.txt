@@ -1,0 +1,65 @@
+
+# Sample Python Code
+
+
+# Import necessary libraries
+import pandas as pd
+import numpy as np
+import statsmodels.api as sm
+
+# Welcome to the Rotman Datathon 2025
+# Initial Python code examples for getting started.
+
+# Data Loading
+# Load the dataset from a CSV file
+file_path = "~/BMO FRT Lab/Datathon_data-2025-Raw(Data).csv"
+uncleaned_data = pd.read_csv(file_path)
+
+# Variables
+# Define the relevant columns based on the case objectives
+selected_columns = [
+    "GDP.growth..annual.....NY.GDP.MKTP.KD.ZG.",
+    "Bank.capital.to.assets.ratio......FB.BNK.CAPA.ZS.",
+    "Consumer.price.index..2010...100...FP.CPI.TOTL.",
+    "Logistics.performance.index..Overall..1.low.to.5.high...LP.LPI.OVRL.XQ.",
+    "Net.investment.in.nonfinancial.assets....of.GDP...GC.NFN.TOTL.GD.ZS.",
+    "Population.growth..annual.....SP.POP.GROW."
+]
+
+# Subset the data to keep only the relevant columns
+new_data = uncleaned_data[selected_columns]
+
+# Data Cleaning
+# Replace ".." with NaN and convert columns to numeric
+new_data = new_data.replace("..", np.nan).apply(pd.to_numeric, errors='coerce')
+
+# Handle missing values by replacing them with the column mean
+new_data = new_data.fillna(new_data.mean())
+
+# Regression Analysis
+# Define the response variable (Y) and predictors (X)
+Y = new_data["GDP.growth..annual.....NY.GDP.MKTP.KD.ZG."]
+X = new_data.drop(columns=["GDP.growth..annual.....NY.GDP.MKTP.KD.ZG."])
+
+# Add a constant term for the intercept in the regression model
+X = sm.add_constant(X)
+
+# Fit the linear regression model
+model = sm.OLS(Y, X).fit()
+
+# Print the summary of the model
+print(model.summary())
+
+# Note on Categorical Variables:
+# If there were categorical variables (like country status), you could use `pd.get_dummies`
+# or map binary categories to 0 and 1 for analysis.
+
+# Example code for binary categorical variable transformation (not applicable here):
+# new_data["Status"] = new_data["Status"].map({"Developed": 1, "Developing": 0})
+
+# Note:
+# This code sets up the basics for data cleaning, handling missing values,
+# and building a preliminary regression model.
+# Further refinement and exploration are required based on your specific case objectives.
+
+# Good luck on your analyses and Datathon 2025!

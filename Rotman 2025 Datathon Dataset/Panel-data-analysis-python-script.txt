@@ -1,0 +1,61 @@
+# Panel Data Analysis in Python
+
+
+# Import necessary libraries
+import pandas as pd
+import numpy as np
+from linearmodels.panel import PanelOLS
+import statsmodels.api as sm
+
+# Load and Prepare Data
+# Assume we have a dataset in CSV format with columns: Country, Year, GDP, CPI, GINI, Economic_Index
+file_path = "path_to_your_dataset.csv"
+data = pd.read_csv(file_path)
+
+# Ensure the data is in long (panel) format
+# Convert 'Country' and 'Year' into a multi-index
+data = data.set_index(['Country', 'Year']).sort_index()
+
+# Exploratory Data Analysis
+print(data.describe())
+print(data.isnull().sum())  # Check for missing values
+
+# Handle Missing Values (e.g., forward-fill or replace with column means)
+data = data.fillna(method='ffill').fillna(method='bfill')
+
+# Variables for the analysis
+Y = data['GDP']  # Response variable
+X = data[['CPI', 'GINI', 'Economic_Index']]  # Predictor variables
+
+# Add a constant term to predictors for the intercept
+X = sm.add_constant(X)
+
+# Panel Data Analysis: Fixed Effects Model
+# Difference out the country-level fixed effects
+model_fe = PanelOLS(Y, X, entity_effects=True)  # entity_effects=True includes fixed effects
+fe_results = model_fe.fit()
+
+# Display results
+print(fe_results)
+
+# Panel Data Analysis: Random Effects Model
+# Entity effects not included (random effects assumed)
+model_re = PanelOLS(Y, X, entity_effects=False)
+re_results = model_re.fit()
+
+# Display results
+print(re_results)
+
+# Hausman Test to choose between FE and RE
+# (RE is preferred if the unobserved effects are uncorrelated with the predictors)
+def hausman(fe_res, re_res):
+    b_diff = fe_res.params - re_res.params
+    cov_diff = fe_res.cov - re_res.cov
+    stat = np.dot(b_diff.T, np.linalg.solve(cov_diff, b_diff))
+    p_value = 1 - stats.chi2.cdf(stat, len(b_diff))
+    return stat, p_value
+
+hausman_stat, hausman_p_value = hausman(fe_results, re_results)
+print(f"Hausman Test Statistic: {hausman_stat}, P-value: {hausman_p_value}")
+
+# If p-value < 0.05, choose Fixed Effects. Otherwise, choose Random Effects.
